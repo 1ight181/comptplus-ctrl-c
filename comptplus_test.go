@@ -2,6 +2,7 @@ package comptplus
 
 import (
 	"testing"
+	"time"
 
 	"github.com/elk-language/go-prompt"
 	"github.com/spf13/cobra"
@@ -89,6 +90,58 @@ func TestFindSuggestions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAsyncFlagValueSuggestions(t *testing.T) {
+	rootCmd := newTestCommand("root", "The root cmd")
+	getCmd := newTestCommand("get", "Get something")
+	getFoodCmd := newTestCommand("food", "Get some food")
+	getFoodCmd.PersistentFlags().StringP("name", "n", "John", "name of the person")
+
+	fetches := make(chan struct{}, 10)
+	_ = getFoodCmd.RegisterFlagCompletionFunc("name", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		fetches <- struct{}{}
+		return []string{"John", "Mary\tMarianne", "Anne"}, cobra.ShellCompDirectiveNoFileComp
+	})
+
+	rootCmd.AddCommand(getCmd)
+	getCmd.AddCommand(getFoodCmd)
+
+	cp := &CobraPrompt{
+		RootCmd:                   rootCmd,
+		AsyncFlagValueSuggestions: true,
+	}
+
+	// First call: returns empty, triggers background fetch
+	buf := prompt.NewBuffer()
+	buf.InsertTextMoveCursor("get food --name ", 999, 999, false)
+	suggestions, _, _ := cp.findSuggestions(*buf.Document())
+	assert.Empty(t, suggestions, "First async call should return empty")
+
+	// Wait for background goroutine to complete
+	select {
+	case <-fetches:
+	case <-time.After(time.Second):
+		t.Fatal("background fetch did not complete")
+	}
+	// Small sleep to let the goroutine finish writing to cache after the fetch
+	time.Sleep(10 * time.Millisecond)
+
+	// Second call: returns cached results
+	suggestions, _, _ = cp.findSuggestions(*buf.Document())
+	assert.Len(t, suggestions, 3)
+	texts := make(map[string]struct{})
+	for _, s := range suggestions {
+		texts[s.Text] = struct{}{}
+	}
+	assert.Contains(t, texts, "John")
+	assert.Contains(t, texts, "Mary")
+	assert.Contains(t, texts, "Anne")
+
+	// Verify only one fetch occurred (cache should still be fresh)
+	suggestions, _, _ = cp.findSuggestions(*buf.Document())
+	assert.Len(t, suggestions, 3)
+	assert.Len(t, fetches, 0, "Should not have triggered another fetch while cache is fresh")
 }
 
 func newTestCommand(use string, short string) *cobra.Command {
