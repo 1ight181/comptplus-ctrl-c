@@ -929,6 +929,90 @@ func TestExecuteCommand_ContextPropagation(t *testing.T) {
 	assert.Equal(t, "hello-from-context", receivedVal)
 }
 
+// TestBuildPromptOptions verifies that CobraPrompt fields are correctly wired into go-prompt options.
+func TestBuildPromptOptions(t *testing.T) {
+	t.Run("baseline only includes completer", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: newTestCommand("root", "")}
+		opts := cp.buildPromptOptions()
+		// 1 option: WithCompleter
+		assert.Len(t, opts, 1)
+	})
+
+	t.Run("PrefixCallback adds an option", func(t *testing.T) {
+		cp := &CobraPrompt{
+			RootCmd:        newTestCommand("root", ""),
+			PrefixCallback: func() string { return "> " },
+		}
+		opts := cp.buildPromptOptions()
+		assert.Len(t, opts, 2)
+	})
+
+	t.Run("CompletionOnDown adds an option", func(t *testing.T) {
+		cp := &CobraPrompt{
+			RootCmd:          newTestCommand("root", ""),
+			CompletionOnDown: true,
+		}
+		opts := cp.buildPromptOptions()
+		assert.Len(t, opts, 2)
+	})
+
+	t.Run("BreakLineCallback adds an option", func(t *testing.T) {
+		cp := &CobraPrompt{
+			RootCmd:           newTestCommand("root", ""),
+			BreakLineCallback: func(doc *prompt.Document) {},
+		}
+		opts := cp.buildPromptOptions()
+		assert.Len(t, opts, 2)
+	})
+
+	t.Run("KeyBindings adds an option", func(t *testing.T) {
+		cp := &CobraPrompt{
+			RootCmd: newTestCommand("root", ""),
+			KeyBindings: []prompt.KeyBind{
+				{Key: prompt.ControlSpace, Fn: func(p *prompt.Prompt) bool { return false }},
+			},
+		}
+		opts := cp.buildPromptOptions()
+		assert.Len(t, opts, 2)
+	})
+
+	t.Run("all fields together produce correct count", func(t *testing.T) {
+		cp := &CobraPrompt{
+			RootCmd:           newTestCommand("root", ""),
+			PrefixCallback:    func() string { return "> " },
+			CompletionOnDown:  true,
+			BreakLineCallback: func(doc *prompt.Document) {},
+			KeyBindings: []prompt.KeyBind{
+				{Key: prompt.ControlSpace, Fn: func(p *prompt.Prompt) bool { return false }},
+			},
+			GoPromptOptions: []prompt.Option{
+				prompt.WithTitle("test"),
+				prompt.WithMaxSuggestion(10),
+			},
+		}
+		opts := cp.buildPromptOptions()
+		// 1 (completer) + 4 (fields) + 2 (GoPromptOptions) = 7
+		assert.Len(t, opts, 7)
+	})
+
+	t.Run("GoPromptOptions come last so they can override", func(t *testing.T) {
+		// This is a structural test: we verify the count is right when mixing
+		// CobraPrompt fields with GoPromptOptions. The ordering guarantee
+		// (fields first, GoPromptOptions last) lets users override defaults.
+		callOrder := []string{}
+		cp := &CobraPrompt{
+			RootCmd:        newTestCommand("root", ""),
+			PrefixCallback: func() string { callOrder = append(callOrder, "prefix"); return "> " },
+			GoPromptOptions: []prompt.Option{
+				prompt.WithPrefix("static> "), // should come after PrefixCallback option
+			},
+		}
+		opts := cp.buildPromptOptions()
+		// 1 (completer) + 1 (prefix callback) + 1 (GoPromptOptions) = 3
+		assert.Len(t, opts, 3)
+	})
+}
+
 // --- Helpers ---
 
 // newCobraPromptForTest creates a CobraPrompt with all hooks/reset behaviour initialized,

@@ -156,6 +156,16 @@ func (co *CobraPrompt) RunContext(ctx context.Context) {
 
 	co.prepareCommands()
 
+	p := prompt.New(
+		co.executeCommand(ctx),
+		co.buildPromptOptions()...,
+	)
+
+	p.Run()
+}
+
+// buildPromptOptions assembles the go-prompt options from CobraPrompt configuration.
+func (co *CobraPrompt) buildPromptOptions() []prompt.Option {
 	opts := []prompt.Option{
 		prompt.WithCompleter(co.findSuggestions),
 	}
@@ -171,14 +181,7 @@ func (co *CobraPrompt) RunContext(ctx context.Context) {
 	if len(co.KeyBindings) > 0 {
 		opts = append(opts, prompt.WithKeyBind(co.KeyBindings...))
 	}
-	opts = append(opts, co.GoPromptOptions...)
-
-	p := prompt.New(
-		co.executeCommand(ctx),
-		opts...,
-	)
-
-	p.Run()
+	return append(opts, co.GoPromptOptions...)
 }
 
 func (co *CobraPrompt) resetFlagsToDefault(cmd *cobra.Command) {
