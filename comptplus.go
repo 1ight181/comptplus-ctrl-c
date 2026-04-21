@@ -85,6 +85,9 @@ type CobraPrompt struct {
 	// Overrides any static prefix set via GoPromptOptions WithPrefix.
 	PrefixCallback func() string
 
+	// CompletionOnDown allows the Down arrow key to open the completion dropdown.
+	CompletionOnDown bool
+
 	flagCache flagValueCache
 }
 
@@ -150,6 +153,9 @@ func (co *CobraPrompt) RunContext(ctx context.Context) {
 	}
 	if co.PrefixCallback != nil {
 		opts = append(opts, prompt.WithPrefixCallback(co.PrefixCallback))
+	}
+	if co.CompletionOnDown {
+		opts = append(opts, prompt.WithCompletionOnDown())
 	}
 	opts = append(opts, co.GoPromptOptions...)
 
