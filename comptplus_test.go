@@ -76,6 +76,21 @@ func TestFindSuggestions(t *testing.T) {
 			input:           "get food -n ",
 			expectedResults: []string{"John", "Mary", "Anne"},
 		},
+		{
+			name:            "Flag suggestions after quoted flag value",
+			input:           `get food --name "Mary" -`,
+			expectedResults: []string{"-n"},
+		},
+		{
+			name:            "Long flag suggestions after quoted flag value",
+			input:           `get food --name "Mary" --`,
+			expectedResults: []string{"--name"},
+		},
+		{
+			name:            "Subcommand resolution with quoted args",
+			input:           `get food -n "John Oliver" --`,
+			expectedResults: []string{"--name"},
+		},
 	}
 
 	for _, test := range tests {
@@ -617,6 +632,65 @@ func TestSuggestionFilter(t *testing.T) {
 
 	suggestions := suggestTexts(cp, "")
 	assert.Equal(t, []string{"beta"}, suggestions)
+}
+
+// TestSuggestions_ShellquoteParsing verifies the suggestion engine handles quoted arguments correctly.
+// These tests would fail if findSuggestions/getCurrentFlagAndValueContext used strings.Fields.
+func TestSuggestions_ShellquoteParsing(t *testing.T) {
+	rootCmd := newTestCommand("root", "")
+	cmd := newTestCommand("deploy", "Deploy something")
+	cmd.Flags().String("name", "", "deployment name")
+	cmd.Flags().String("env", "", "target environment")
+
+	var receivedArgs []string
+	_ = cmd.RegisterFlagCompletionFunc("env", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		receivedArgs = args
+		return []string{"dev", "staging", "prod"}, cobra.ShellCompDirectiveNoFileComp
+	})
+	rootCmd.AddCommand(cmd)
+
+	t.Run("flag value suggestions after a quoted flag value", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd}
+		// With strings.Fields this would split "My App" into two tokens,
+		// breaking flag context detection
+		suggestions := suggestTexts(cp, `deploy --name "My App" --env `)
+		assert.Contains(t, suggestions, "dev")
+		assert.Contains(t, suggestions, "staging")
+		assert.Contains(t, suggestions, "prod")
+	})
+
+	t.Run("completion func receives properly parsed args", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd}
+		receivedArgs = nil
+		suggestTexts(cp, `deploy --name "My App" --env `)
+		// The completion function should see the full quoted string as one token,
+		// not "\"My" and "App\"" as separate tokens
+		found := false
+		for _, a := range receivedArgs {
+			if a == "My App" {
+				found = true
+			}
+		}
+		assert.True(t, found, "completion func should receive quoted arg as single token, got: %v", receivedArgs)
+	})
+
+	t.Run("partial value filtering with quoted preceding arg", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd}
+		suggestions := suggestTexts(cp, `deploy --name "My App" --env d`)
+		assert.Equal(t, []string{"dev"}, suggestions)
+	})
+
+	t.Run("single-quoted arg does not break suggestion context", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd}
+		suggestions := suggestTexts(cp, `deploy --name 'My App' --env `)
+		assert.Contains(t, suggestions, "dev")
+	})
+
+	t.Run("backslash-escaped space does not break suggestion context", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd}
+		suggestions := suggestTexts(cp, `deploy --name My\ App --env `)
+		assert.Contains(t, suggestions, "dev")
+	})
 }
 
 // TestAsyncFlagValueSuggestions_ConcurrentAccess stress-tests the flag cache under concurrent reads.
