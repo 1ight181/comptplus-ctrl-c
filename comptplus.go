@@ -88,6 +88,10 @@ type CobraPrompt struct {
 	// CompletionOnDown allows the Down arrow key to open the completion dropdown.
 	CompletionOnDown bool
 
+	// BreakLineCallback is called after every line break (Enter press) with the
+	// current document state. Useful for logging, analytics, or cache pre-warming.
+	BreakLineCallback func(doc *prompt.Document)
+
 	flagCache flagValueCache
 }
 
@@ -156,6 +160,9 @@ func (co *CobraPrompt) RunContext(ctx context.Context) {
 	}
 	if co.CompletionOnDown {
 		opts = append(opts, prompt.WithCompletionOnDown())
+	}
+	if co.BreakLineCallback != nil {
+		opts = append(opts, prompt.WithBreakLineCallback(co.BreakLineCallback))
 	}
 	opts = append(opts, co.GoPromptOptions...)
 
