@@ -80,6 +80,11 @@ type CobraPrompt struct {
 	// When enabled, typing "dpl" can match "deploy", "srvlst" can match "server-list", etc.
 	FuzzyFilter bool
 
+	// PrefixCallback returns the prompt prefix dynamically on each render.
+	// Useful for showing context like current resource or output format.
+	// Overrides any static prefix set via GoPromptOptions WithPrefix.
+	PrefixCallback func() string
+
 	flagCache flagValueCache
 }
 
@@ -140,14 +145,17 @@ func (co *CobraPrompt) RunContext(ctx context.Context) {
 
 	co.prepareCommands()
 
+	opts := []prompt.Option{
+		prompt.WithCompleter(co.findSuggestions),
+	}
+	if co.PrefixCallback != nil {
+		opts = append(opts, prompt.WithPrefixCallback(co.PrefixCallback))
+	}
+	opts = append(opts, co.GoPromptOptions...)
+
 	p := prompt.New(
 		co.executeCommand(ctx),
-		append(
-			[]prompt.Option{
-				prompt.WithCompleter(co.findSuggestions),
-			},
-			co.GoPromptOptions...,
-		)...,
+		opts...,
 	)
 
 	p.Run()
