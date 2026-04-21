@@ -634,6 +634,38 @@ func TestSuggestionFilter(t *testing.T) {
 	assert.Equal(t, []string{"beta"}, suggestions)
 }
 
+// TestFuzzyFilter verifies fuzzy matching for suggestions.
+func TestFuzzyFilter(t *testing.T) {
+	rootCmd := newTestCommand("root", "")
+	rootCmd.AddCommand(newTestCommand("deploy", "Deploy app"))
+	rootCmd.AddCommand(newTestCommand("describe", "Describe resource"))
+	rootCmd.AddCommand(newTestCommand("server-list", "List servers"))
+
+	t.Run("prefix filter is default", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd}
+		suggestions := suggestTexts(cp, "dpl")
+		assert.Empty(t, suggestions, "prefix filter should not match 'dpl' for 'deploy'")
+	})
+
+	t.Run("fuzzy filter matches non-contiguous characters", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd, FuzzyFilter: true}
+		suggestions := suggestTexts(cp, "dpl")
+		assert.Contains(t, suggestions, "deploy")
+	})
+
+	t.Run("fuzzy filter matches across hyphens", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd, FuzzyFilter: true}
+		suggestions := suggestTexts(cp, "srvlst")
+		assert.Contains(t, suggestions, "server-list")
+	})
+
+	t.Run("fuzzy filter still returns all on empty input", func(t *testing.T) {
+		cp := &CobraPrompt{RootCmd: rootCmd, FuzzyFilter: true}
+		suggestions := suggestTexts(cp, "")
+		assert.Len(t, suggestions, 3)
+	})
+}
+
 // TestSuggestions_ShellquoteParsing verifies the suggestion engine handles quoted arguments correctly.
 // These tests would fail if findSuggestions/getCurrentFlagAndValueContext used strings.Fields.
 func TestSuggestions_ShellquoteParsing(t *testing.T) {

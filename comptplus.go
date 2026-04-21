@@ -76,6 +76,10 @@ type CobraPrompt struct {
 	// empty results; subsequent keystrokes will return the fetched data.
 	AsyncFlagValueSuggestions bool
 
+	// FuzzyFilter uses fuzzy matching for suggestion filtering instead of prefix matching.
+	// When enabled, typing "dpl" can match "deploy", "srvlst" can match "server-list", etc.
+	FuzzyFilter bool
+
 	flagCache flagValueCache
 }
 
@@ -302,6 +306,9 @@ func (co *CobraPrompt) findSuggestions(d prompt.Document) ([]prompt.Suggest, ist
 		return co.SuggestionFilter(suggestions, &d), startIndex, endIndex
 	}
 
+	if co.FuzzyFilter {
+		return prompt.FilterFuzzy(suggestions, w, true), startIndex, endIndex
+	}
 	return prompt.FilterHasPrefix(suggestions, w, true), startIndex, endIndex
 }
 
