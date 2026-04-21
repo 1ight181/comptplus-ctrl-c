@@ -92,6 +92,10 @@ type CobraPrompt struct {
 	// current document state. Useful for logging, analytics, or cache pre-warming.
 	BreakLineCallback func(doc *prompt.Document)
 
+	// KeyBindings adds custom key bindings to the prompt.
+	// Each KeyBind maps a key to a handler function.
+	KeyBindings []prompt.KeyBind
+
 	flagCache flagValueCache
 }
 
@@ -163,6 +167,9 @@ func (co *CobraPrompt) RunContext(ctx context.Context) {
 	}
 	if co.BreakLineCallback != nil {
 		opts = append(opts, prompt.WithBreakLineCallback(co.BreakLineCallback))
+	}
+	if len(co.KeyBindings) > 0 {
+		opts = append(opts, prompt.WithKeyBind(co.KeyBindings...))
 	}
 	opts = append(opts, co.GoPromptOptions...)
 
