@@ -1,4 +1,4 @@
-module github.com/ionoscloudsdk/comptplus-ctrl-c
+module github.com/1ight181/comptplus-ctrl-c
 
 go 1.25.0
 
