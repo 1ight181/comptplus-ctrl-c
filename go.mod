@@ -1,9 +1,8 @@
-module github.com/ionoscloudsdk/comptplus
+module github.com/ionoscloudsdk/comptplus-ctrl-c
 
 go 1.25.0
 
 require (
-	github.com/elk-language/go-prompt v1.3.1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
@@ -11,6 +10,7 @@ require (
 )
 
 require (
+	github.com/1ight181/go-prompt-ctrl-c v0.0.0-20260424070731-9a192af1f9f9
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

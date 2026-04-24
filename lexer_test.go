@@ -3,7 +3,7 @@ package comptplus
 import (
 	"testing"
 
-	"github.com/elk-language/go-prompt"
+	prompt "github.com/1ight181/go-prompt-ctrl-c"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

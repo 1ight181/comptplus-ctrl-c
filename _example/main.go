@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/elk-language/go-prompt"
+	"github.com/1ight181/go-prompt-ctrl-c"
 	cobraprompt "github.com/ionoscloudsdk/comptplus"
 	"github.com/ionoscloudsdk/comptplus/_example/cmd"
 	"github.com/spf13/cobra"

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elk-language/go-prompt"
-	istrings "github.com/elk-language/go-prompt/strings"
+	prompt "github.com/1ight181/go-prompt-ctrl-c"
+	istrings "github.com/1ight181/go-prompt-ctrl-c/strings"
 	shellquote "github.com/kballard/go-shellquote"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -26,7 +26,7 @@ type CobraPrompt struct {
 	RootCmd *cobra.Command
 
 	// GoPromptOptions is for customize go-prompt
-	// see https://github.com/elk-language/go-prompt
+	// see https://github.com/1ight181/go-prompt-ctrl-c
 	GoPromptOptions []prompt.Option
 
 	// DynamicSuggestionsFunc will be executed if a command has CallbackAnnotation as an annotation. If it's included

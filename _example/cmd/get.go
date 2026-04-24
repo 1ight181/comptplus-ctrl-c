@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/elk-language/go-prompt"
+	"github.com/1ight181/go-prompt-ctrl-c"
 	cobraprompt "github.com/ionoscloudsdk/comptplus"
 	"github.com/spf13/cobra"
 )

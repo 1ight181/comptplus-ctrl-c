@@ -3,8 +3,8 @@ package comptplus
 import (
 	"strings"
 
-	"github.com/elk-language/go-prompt"
-	istrings "github.com/elk-language/go-prompt/strings"
+	prompt "github.com/1ight181/go-prompt-ctrl-c"
+	istrings "github.com/1ight181/go-prompt-ctrl-c/strings"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -97,8 +97,8 @@ func (l *CobraLexer) tokenize(input string) []prompt.Token {
 	// NOTE: go-prompt's renderer uses LastByteIndex as inclusive (it does input[first:last+1]),
 	// so we pass end-1 as the last byte index.
 	var tokens []prompt.Token
-	wordIndex := 0     // counts non-whitespace spans
-	prevWord := ""     // the previous non-whitespace word
+	wordIndex := 0 // counts non-whitespace spans
+	prevWord := "" // the previous non-whitespace word
 
 	for _, s := range spans {
 		lastByte := istrings.ByteNumber(s.end - 1)

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elk-language/go-prompt"
+	prompt "github.com/1ight181/go-prompt-ctrl-c"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
