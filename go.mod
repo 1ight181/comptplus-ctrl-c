@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/1ight181/go-prompt-ctrl-c v0.0.0-20260424070731-9a192af1f9f9
+	github.com/1ight181/go-prompt-ctrl-c v0.0.1
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
